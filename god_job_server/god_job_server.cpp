@@ -4,6 +4,7 @@
 #include <muduo/net/InetAddress.h>
 #include <muduo/base/Logging.h>
 #include <iostream>
+#include <cstring>
 using namespace muduo;
 using namespace muduo::net;
 
@@ -21,8 +22,27 @@ void onConnection(const TcpConnectionPtr& conn)
 
 void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
 {
-    LOG_INFO << "Received " << buf->readableBytes() << " bytes from " << conn->peerAddress().toIpPort();
-    conn->send(buf);
+    static bool toBeDataLen = true;//将要到达的是数据长度还是数据内容
+    static unsigned int bytesToRecive = 4;  //将要到达的字节数
+    while(buf->readableBytes() >= bytesToRecive)
+    {
+        if (toBeDataLen)//接收数据长度
+        {
+            std::memcpy(&bytesToRecive, buf->peek(), 4);
+            buf->retrieve(4);
+            toBeDataLen = false;//接下来接收数据
+        }
+        else//接收数据
+        {
+            string data = buf->retrieveAsString(bytesToRecive);
+            toBeDataLen = true;
+            bytesToRecive = 4;
+        }
+    }
+    //LOG_INFO << "Received " << buf->readableBytes() << " bytes from " << conn->peerAddress().toIpPort();
+    //std::cout << buf << std::endl;
+    /*conn->send(buf);*/
+
 }
 
 int main(int argc, char* argv[])
