@@ -5,6 +5,7 @@
 #include <muduo/base/Logging.h>
 #include <iostream>
 #include <cstring>
+#include <json.h>
 using namespace muduo;
 using namespace muduo::net;
 
@@ -34,9 +35,36 @@ void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
         }
         else//接收数据
         {
-            string data = buf->retrieveAsString(bytesToRecive);
+            std::string jsonData = buf->retrieveAsString(bytesToRecive);
             toBeDataLen = true;
             bytesToRecive = 4;
+
+            // 解析 JSON 数据
+            Json::Value root;
+            Json::CharReaderBuilder reader;
+            std::string errs;
+
+            std::istringstream ss(jsonData);
+            if (Json::parseFromStream(reader, ss, &root, &errs)) {
+                // 访问解析后的 JSON 数据
+                std::string name = root["name"].asString();
+                int age = root["age"].asInt();
+                bool isStudent = root["is_student"].asBool();
+                const Json::Value courses = root["courses"];
+
+                std::cout << "Name: " << name << std::endl;
+                std::cout << "Age: " << age << std::endl;
+                std::cout << "Is Student: " << (isStudent ? "Yes" : "No") << std::endl;
+
+                std::cout << "Courses: ";
+                for (const auto& course : courses) {
+                    std::cout << course.asString() << " ";
+                }
+                std::cout << std::endl;
+            }
+            else {
+                std::cerr << "Failed to parse JSON: " << errs << std::endl;
+            }
         }
     }
     //LOG_INFO << "Received " << buf->readableBytes() << " bytes from " << conn->peerAddress().toIpPort();

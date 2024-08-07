@@ -16,8 +16,14 @@ link_directories(/home/ydy/good_job_server/muduo-2.0.2/muduo-master/build/releas
 
 # 添加包含目录
 # include_directories(/home/ydy/good_job_server/muduo-2.0.2/muduo-master/build/release-install-cpp11/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/jsoncpp)
 
 # 添加源文件
+set(JSONCPP_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/jsoncpp/json_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/jsoncpp/json_value.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/jsoncpp/json_writer.cpp
+)
 
 set(SOURCES
     god_job_server.cpp
@@ -26,7 +32,7 @@ set(SOURCES
 )
 
 # 创建可执行文件
-add_executable(god_job_server ${SOURCES})
+add_executable(god_job_server ${SOURCES} ${JSONCPP_SOURCES})
 # 将源代码添加到此项目的可执行文件。
 
 # 链接库文件
