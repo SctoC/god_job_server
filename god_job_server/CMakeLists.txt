@@ -28,6 +28,7 @@ set(JSONCPP_SOURCES
 set(SOURCES
     god_job_server.cpp
     god_job_server.h
+    MySQLClient.cpp
     # 其他源文件
 )
 
@@ -42,5 +43,6 @@ target_link_libraries(god_job_server
     muduo_inspect
     muduo_net
     pthread
+    mysqlclient
     # 如果需要，还可以链接其他库
 )
