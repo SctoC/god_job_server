@@ -1,8 +1,4 @@
-﻿#include <muduo/net/EventLoop.h>
-#include <muduo/net/TcpServer.h>
-#include <muduo/net/Buffer.h>
-#include <muduo/net/InetAddress.h>
-#include <muduo/base/Logging.h>
+﻿
 #include <iostream>
 #include <cstring>
 #include <json.h>
@@ -20,6 +16,7 @@ void onConnection(const TcpConnectionPtr& conn)
     }
     else
     {
+        singleModel->deleteConn(conn);
         LOG_INFO << "Connection closed by " << conn->peerAddress().toIpPort();
     }
 }
@@ -41,7 +38,7 @@ void onMessage(const TcpConnectionPtr& conn, Buffer* buf, Timestamp receiveTime)
             std::string jsonData = buf->retrieveAsString(bytesToRecive);
             toBeDataLen = true;
             bytesToRecive = 4;
-            singleModel->handleQuest(jsonData);
+            singleModel->handleQuest(jsonData, conn);
         }
     }
 

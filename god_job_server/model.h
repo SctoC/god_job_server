@@ -1,11 +1,20 @@
 #pragma once
+#include <muduo/net/EventLoop.h>
+#include <muduo/net/TcpServer.h>
+#include <muduo/net/Buffer.h>
+#include <muduo/net/InetAddress.h>
+#include <muduo/base/Logging.h>
 #include <json.h> // 确保使用 JsonCpp 的正确路径
 #include <string>
 #include <sstream> // 引入 istringstream
 #include "quest_ack.h"
 #include <iostream>
 #include <cstring>
+#include <boost/bimap.hpp>
+
 #define singleModel Model::GetInstance()
+using namespace muduo;
+using namespace muduo::net;
 class Model // 使用 PascalCase 作为类名
 {
 public:
@@ -15,21 +24,21 @@ public:
         return &uniqueModel;
     }
 
-    void handleQuest(const std::string& jsonString)
+    void handleQuest(const std::string& jsonString,const TcpConnectionPtr& conn)
     {
         Json::Value* root = JsonParse(jsonString);
         int type =(*root)["type"].asInt();
         switch (type)
         {
         case logInQuest:
-            handleLogInQuest(root);
+            handleLogInQuest(root,conn);
             break;
         }
 
         delete root;
 
     }
-    void handleLogInQuest(Json::Value* root)
+    void handleLogInQuest(Json::Value* root,const TcpConnectionPtr& conn)
     {
         // 访问解析后的 JSON 数据
         std::string account = (*root)["account"].asString();
@@ -52,7 +61,10 @@ public:
                 // 获取第一列的值
                 std::string firstColumnValue = row[0] ? row[0] : "NULL"; // 检查空指针
                 if (firstColumnValue == password)
+                {
                     loginSucces = true;
+                    account_connMap.insert({ account,conn });
+                }
             }
             else {
                 std::cerr << "No rows found in result set.\n";
@@ -80,7 +92,7 @@ public:
       
         db.disconnect();
 
-        sendAck(conn, rootAck)
+        sendAck(account_connMap.left.find(account)->second, rootAck);
      
     }
 void sendAck(const TcpConnectionPtr& conn, Json::Value& root)
@@ -116,4 +128,16 @@ void sendAck(const TcpConnectionPtr& conn, Json::Value& root)
             return nullptr; // 解析失败时返回 nullptr
         }
     }
+ void deleteConn(const TcpConnectionPtr& conn) // 使用 const 引用以避免复制
+ {
+     if (account_connMap.right.find(conn) != account_connMap.right.end())
+     {
+         account_connMap.right.erase(conn);
+     }
+ }
+
+ private:
+     boost::bimaps::bimap<std::string, TcpConnectionPtr> account_connMap;
+    
+
 };
