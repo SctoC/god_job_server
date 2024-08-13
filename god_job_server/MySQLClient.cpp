@@ -21,6 +21,10 @@ bool MySQLClient::connect() {
         conn = NULL;
         return false;
     }
+    if (mysql_set_character_set(conn, "utf8mb4")) {
+       
+        return false;
+    }
 
     return true;
 }

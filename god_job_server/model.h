@@ -81,7 +81,7 @@ public:
                 MYSQL_ROW row;
                 while ((row = mysql_fetch_row(db.res))) {
                   Json::Value buddy;
-                  buddy["acount"] = row[0];//∫√”—’À∫≈
+                  buddy["account"] = row[0];//∫√”—’À∫≈
                   buddy["name"] = row[1];//∫√”—Í«≥∆
                   buddys.append(buddy);
                 }
