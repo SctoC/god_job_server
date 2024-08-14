@@ -48,6 +48,8 @@ public:
         std::string password = (*root)["password"].asString();
         std::string sql = "select password from users where account='" + account + "'";
         std::string sql1 = "select account2_2,name from buddy_buddy join users on buddy_buddy.account2_2 = users.account where account2_1 = '" + account + "'";
+        std::string sql2 = "select groupMember.groupId, groupName from groupMember join groupIfo on groupMember.groupId = groupIfo.groupId   where userAcount = '"+ account + "'";
+        std::string sql3 = "select groupMember.userAcount, users.name from groupMember join users on groupMember.userAcount = users.account where groupId = '";
 
         MySQLClient db("localhost", "root", "xqdeqqmima0721", "godJobDb");
         if (!db.connect()) {
@@ -80,7 +82,6 @@ public:
         {
             Json::Value buddys(Json::arrayValue);
             if (db.query(sql1)) {
-                unsigned int num_fields = mysql_num_fields(db.res);
                 MYSQL_ROW row;
                 while ((row = mysql_fetch_row(db.res))) {
                   Json::Value buddy;
@@ -89,8 +90,34 @@ public:
                   buddys.append(buddy);
                 }
             }
-
             rootAck["buddys"] = buddys;
+
+            Json::Value groups(Json::arrayValue);
+            if (db.query(sql2)) {
+                MYSQL_ROW row;
+                while ((row = mysql_fetch_row(db.res))) {
+                    Json::Value group;
+                    group["groupId"] = row[0];//群聊ID
+                    group["groupName"] = row[1];//群聊昵称
+
+                    Json::Value buddys(Json::arrayValue);
+                    std::string sql4 = sql3 + row[0] + "'";
+               
+                    if (db.query(sql4)) {
+                        MYSQL_ROW row;
+                        while ((row = mysql_fetch_row(db.res))) {
+                            Json::Value buddy;
+                            buddy["account"] = row[0];//群成员账号
+                            buddy["Name"] = row[1];//群成员昵称
+
+                            buddys.append(buddy);
+                        }
+                    }
+                    group["member"] = buddys;//群成员
+                    groups.append(group);
+                }
+            }
+            rootAck["gruops"] = groups;
         }
       
         db.disconnect();
