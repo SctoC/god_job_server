@@ -78,6 +78,7 @@ public:
         Json::Value rootAck;
         rootAck["type"] = logInAck;
         rootAck["isSuccess"] = loginSucces;
+        MYSQL_RES* res = nullptr;
         if (loginSucces)
         {
             Json::Value buddys(Json::arrayValue);
@@ -90,12 +91,14 @@ public:
                   buddys.append(buddy);
                 }
             }
+            db.freeRes();
             rootAck["buddys"] = buddys;
 
             Json::Value groups(Json::arrayValue);
             if (db.query(sql2)) {
                 MYSQL_ROW row;
-                while ((row = mysql_fetch_row(db.res))) {
+                res = db.res;
+                while ((row = mysql_fetch_row(res))) {
                     Json::Value group;
                     group["groupId"] = row[0];//群聊ID
                     group["groupName"] = row[1];//群聊昵称
@@ -113,13 +116,18 @@ public:
                             buddys.append(buddy);
                         }
                     }
-                    group["member"] = buddys;//群成员
+                    db.freeRes();
+                    group["members"] = buddys;//群成员
                     groups.append(group);
                 }
             }
-            rootAck["gruops"] = groups;
+            rootAck["groups"] = groups;
         }
-      
+        
+        if (res) {
+            mysql_free_result(res);
+            res = NULL;
+        }
         db.disconnect();
 
         sendAck(account_connMap.left.find(account)->second, rootAck);

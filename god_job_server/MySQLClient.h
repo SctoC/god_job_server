@@ -13,6 +13,7 @@ public:
 
     bool connect();
     void disconnect();
+    void freeRes();
     bool query(const std::string& query);
     void printResults() const;
 

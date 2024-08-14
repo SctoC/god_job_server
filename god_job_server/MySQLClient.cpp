@@ -39,7 +39,13 @@ void MySQLClient::disconnect() {
         res = NULL;
     }
 }
-
+void MySQLClient::freeRes()
+{
+    if (res) {
+        mysql_free_result(res);
+        res = NULL;
+    }
+}
 bool MySQLClient::query(const std::string& query) {
     if (mysql_query(conn, query.c_str())) {
         std::cerr << "QUERY ERROR: " << mysql_error(conn) << std::endl;
