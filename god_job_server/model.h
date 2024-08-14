@@ -33,6 +33,9 @@ public:
         case logInQuest:
             handleLogInQuest(root,conn);
             break;
+        case sendMessageQuest:
+            handlesendMessageQuest(root);
+            break;
         }
 
         delete root;
@@ -94,6 +97,19 @@ public:
 
         sendAck(account_connMap.left.find(account)->second, rootAck);
      
+    }
+    void handlesendMessageQuest(Json::Value* root)
+    {
+        // 访问解析后的 JSON 数据
+      
+        std::string receive_account = (*root)["receive_account"].asString();
+
+        if (account_connMap.left.find(receive_account) != account_connMap.left.end())
+        {
+            LOG_INFO << "New connection from " << account_connMap.left.find(receive_account)->second->peerAddress().toIpPort();
+            sendAck(account_connMap.left.find(receive_account)->second, *root);
+        }
+        //否则存储离线信息   
     }
 void sendAck(const TcpConnectionPtr& conn, Json::Value& root)
 {
