@@ -4,3 +4,5 @@
 
 
 #define sendMessageQuest 2
+
+#define sendGroupMessageQuest 3

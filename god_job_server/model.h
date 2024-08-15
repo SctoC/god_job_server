@@ -36,6 +36,10 @@ public:
         case sendMessageQuest:
             handlesendMessageQuest(root);
             break;
+        case sendGroupMessageQuest:
+            handlesendGroupMessageQuest(root);
+            break;
+            
         }
 
         delete root;
@@ -141,9 +145,45 @@ public:
 
         if (account_connMap.left.find(receive_account) != account_connMap.left.end())
         {
-            LOG_INFO << "New connection from " << account_connMap.left.find(receive_account)->second->peerAddress().toIpPort();
+ 
             sendAck(account_connMap.left.find(receive_account)->second, *root);
         }
+        //否则存储离线信息   
+    }
+    void handlesendGroupMessageQuest(Json::Value* root)
+    {
+        // 访问解析后的 JSON 数据
+
+        std::string send_account = (*root)["send_account"].asString();
+        std::string group_id = (*root)["group_id"].asString();
+
+        //查找群所有成员
+        std::string sql = "select userAcount from groupMember  where groupId='" + group_id + "'";
+        MySQLClient db("localhost", "root", "xqdeqqmima0721", "godJobDb");
+        if (!db.connect()) {
+            return;
+        }
+        std::vector<std::string> memberAccounts;
+
+        if (db.query(sql)) {
+            MYSQL_ROW row;
+            while ((row = mysql_fetch_row(db.res))) {
+                memberAccounts.push_back(row[0]);
+            }
+        }
+        db.disconnect();
+
+        for (int i = 0; i < memberAccounts.size(); i++)
+        {
+            if (memberAccounts[i] != send_account)
+            {
+                if (account_connMap.left.find(memberAccounts[i]) != account_connMap.left.end())
+                {
+                    sendAck(account_connMap.left.find(memberAccounts[i])->second, *root);
+                }
+            }
+        }
+
         //否则存储离线信息   
     }
 void sendAck(const TcpConnectionPtr& conn, Json::Value& root)
